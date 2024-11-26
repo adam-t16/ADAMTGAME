@@ -53,3 +53,27 @@ h1 {
     margin-top: 20px;
     font-size: 1.2rem;
 }
+#controls {
+    margin-top: 20px;
+}
+
+#controls button {
+    padding: 10px 20px;
+    margin: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    border: none;
+    background-color: #0078d7;
+    color: white;
+    border-radius: 5px;
+}
+
+#controls button:hover {
+    background-color: #005bb5;
+}
+
+#game-container {
+    margin-top: 20px;
+    gap: 10px;
+}
+
