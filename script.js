@@ -2,41 +2,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const gameContainer = document.getElementById("game-container");
     const movesCounter = document.getElementById("moves");
     const matchesCounter = document.getElementById("matches");
-    const restartButton = document.getElementById("restart-button");
-    const nextLevelButton = document.getElementById("next-level-button");
-    const timerDisplay = document.createElement("p");
+    const nextLevelButton = document.createElement("button");
 
     let moves = 0;
     let matches = 0;
     let flippedCards = [];
     let lockBoard = false;
-    let timer;
-    let currentLevel = 1;
 
-    const levels = {
-        1: {
-            gridSize: 4,
+    // Définir les cartes pour chaque niveau
+    const levels = [
+        {
             cardValues: [
                 "🍎", "🍌", "🍇", "🍒",
                 "🍎", "🍌", "🍇", "🍒",
                 "🍋", "🍓", "🍉", "🍍",
                 "🍋", "🍓", "🍉", "🍍"
-            ]
+            ],
+            gridTemplate: "repeat(4, 100px)" // Grille 4x4
         },
-        2: {
-            gridSize: 6,
+        {
             cardValues: [
                 "🍎", "🍌", "🍇", "🍒", "🍋", "🍓",
-                "🍉", "🍍", "🍑", "🥝", "🥭", "🍏",
                 "🍎", "🍌", "🍇", "🍒", "🍋", "🍓",
-                "🍉", "🍍", "🍑", "🥝", "🥭", "🍏",
-                "🍊", "🍈", "🥥", "🥑", "🍒", "🍓",
-                "🍊", "🍈", "🥥", "🥑", "🍒", "🍓"
-            ]
+                "🍉", "🍍", "🥝", "🍏", "🍉", "🍍",
+                "🥝", "🍏", "🍑", "🍊", "🍑", "🍊"
+            ],
+            gridTemplate: "repeat(6, 100px)" // Grille 6x4
         }
-    };
+    ];
 
-    // Shuffle the cards
+    let currentLevel = 0;
+
+    // Mélanger les cartes
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -44,26 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Start the timer
-    function startTimer() {
-        let seconds = 0;
-        timerDisplay.textContent = `Time: ${seconds} seconds`;
-        timer = setInterval(() => {
-            seconds++;
-            timerDisplay.textContent = `Time: ${seconds} seconds`;
-        }, 1000);
-    }
-
-    // Stop the timer
-    function stopTimer() {
-        clearInterval(timer);
-    }
-
-    // Initialize the game
-    function initGame() {
-        stopTimer();
-        startTimer();
-        const levelConfig = levels[currentLevel];
+    // Initialiser le jeu
+    function initGame(level) {
         moves = 0;
         matches = 0;
         flippedCards = [];
@@ -72,26 +51,41 @@ document.addEventListener("DOMContentLoaded", () => {
         movesCounter.textContent = moves;
         matchesCounter.textContent = matches;
 
-        shuffle(levelConfig.cardValues);
-        gameContainer.innerHTML = "";
-        gameContainer.style.gridTemplateColumns = `repeat(${levelConfig.gridSize}, 100px)`;
+        const { cardValues, gridTemplate } = levels[level];
+        shuffle(cardValues);
 
-        levelConfig.cardValues.forEach((value) => {
+        gameContainer.innerHTML = "";
+        gameContainer.style.gridTemplateColumns = gridTemplate;
+
+        cardValues.forEach((value) => {
             const card = document.createElement("div");
             card.classList.add("card");
-            card.dataset.value = value;
+
+            const cardFront = document.createElement("div");
+            cardFront.classList.add("card-front");
+            cardFront.textContent = value;
+
+            const cardBack = document.createElement("div");
+            cardBack.classList.add("card-back");
+            cardBack.textContent = "❓";
+
+            card.appendChild(cardFront);
+            card.appendChild(cardBack);
 
             card.addEventListener("click", () => flipCard(card));
             gameContainer.appendChild(card);
         });
+
+        if (level === levels.length - 1) {
+            nextLevelButton.style.display = "none"; // Cacher le bouton après le dernier niveau
+        }
     }
 
-    // Flip a card
+    // Retourner une carte
     function flipCard(card) {
-        if (lockBoard || flippedCards.includes(card)) return;
+        if (lockBoard || flippedCards.includes(card) || card.classList.contains("matched")) return;
 
         card.classList.add("flipped");
-        card.textContent = card.dataset.value;
         flippedCards.push(card);
 
         if (flippedCards.length === 2) {
@@ -99,12 +93,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Check if two flipped cards match
+    // Vérifier si deux cartes correspondent
     function checkForMatch() {
         lockBoard = true;
         const [card1, card2] = flippedCards;
 
-        if (card1.dataset.value === card2.dataset.value) {
+        if (card1.querySelector(".card-front").textContent === card2.querySelector(".card-front").textContent) {
             card1.classList.add("matched");
             card2.classList.add("matched");
             matches++;
@@ -112,45 +106,37 @@ document.addEventListener("DOMContentLoaded", () => {
             flippedCards = [];
             lockBoard = false;
 
-            // Check if the level is won
             if (matches === levels[currentLevel].cardValues.length / 2) {
-                stopTimer();
-                if (currentLevel === 1) {
+                if (currentLevel < levels.length - 1) {
+                    setTimeout(() => alert("Niveau terminé ! Passez au niveau suivant."), 500);
                     nextLevelButton.style.display = "block";
                 } else {
-                    setTimeout(() => alert("You won the game!"), 500);
+                    setTimeout(() => alert("Bravo ! Vous avez terminé tous les niveaux !"), 500);
                 }
             }
         } else {
             setTimeout(() => {
                 card1.classList.remove("flipped");
                 card2.classList.remove("flipped");
-                card1.textContent = "";
-                card2.textContent = "";
                 flippedCards = [];
                 lockBoard = false;
-            }, 1000);
+            }, 800); // Réduire le délai pour plus de difficulté
         }
 
         moves++;
         movesCounter.textContent = moves;
     }
 
-    // Event listeners
-    restartButton.addEventListener("click", () => {
-        currentLevel = 1;
-        nextLevelButton.style.display = "none";
-        initGame();
-    });
-
+    // Passer au niveau suivant
+    nextLevelButton.textContent = "Niveau Suivant";
+    nextLevelButton.style.display = "none";
     nextLevelButton.addEventListener("click", () => {
-        currentLevel = 2;
-        nextLevelButton.style.display = "none";
-        initGame();
+        currentLevel++;
+        initGame(currentLevel);
     });
 
-    // Start the game
-    document.body.insertBefore(timerDisplay, gameContainer);
-    initGame();
-});
+    document.body.appendChild(nextLevelButton);
 
+    // Démarrer le jeu au premier niveau
+    initGame(currentLevel);
+});
