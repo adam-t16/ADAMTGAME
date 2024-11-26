@@ -2,19 +2,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const gameContainer = document.getElementById("game-container");
     const movesCounter = document.getElementById("moves");
     const matchesCounter = document.getElementById("matches");
-
-    // Define card values
-    const cardValues = [
-        "🍎", "🍌", "🍇", "🍒",
-        "🍎", "🍌", "🍇", "🍒",
-        "🍋", "🍓", "🍉", "🍍",
-        "🍋", "🍓", "🍉", "🍍"
-    ];
+    const restartButton = document.getElementById("restart-button");
+    const nextLevelButton = document.getElementById("next-level-button");
+    const timerDisplay = document.createElement("p");
 
     let moves = 0;
     let matches = 0;
     let flippedCards = [];
     let lockBoard = false;
+    let timer;
+    let currentLevel = 1;
+
+    const levels = {
+        1: {
+            gridSize: 4,
+            cardValues: [
+                "🍎", "🍌", "🍇", "🍒",
+                "🍎", "🍌", "🍇", "🍒",
+                "🍋", "🍓", "🍉", "🍍",
+                "🍋", "🍓", "🍉", "🍍"
+            ]
+        },
+        2: {
+            gridSize: 6,
+            cardValues: [
+                "🍎", "🍌", "🍇", "🍒", "🍋", "🍓",
+                "🍉", "🍍", "🍑", "🥝", "🥭", "🍏",
+                "🍎", "🍌", "🍇", "🍒", "🍋", "🍓",
+                "🍉", "🍍", "🍑", "🥝", "🥭", "🍏",
+                "🍊", "🍈", "🥥", "🥑", "🍒", "🍓",
+                "🍊", "🍈", "🥥", "🥑", "🍒", "🍓"
+            ]
+        }
+    };
 
     // Shuffle the cards
     function shuffle(array) {
@@ -24,12 +44,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Start the timer
+    function startTimer() {
+        let seconds = 0;
+        timerDisplay.textContent = `Time: ${seconds} seconds`;
+        timer = setInterval(() => {
+            seconds++;
+            timerDisplay.textContent = `Time: ${seconds} seconds`;
+        }, 1000);
+    }
+
+    // Stop the timer
+    function stopTimer() {
+        clearInterval(timer);
+    }
+
     // Initialize the game
     function initGame() {
-        shuffle(cardValues);
-        gameContainer.innerHTML = "";
+        stopTimer();
+        startTimer();
+        const levelConfig = levels[currentLevel];
+        moves = 0;
+        matches = 0;
+        flippedCards = [];
+        lockBoard = false;
 
-        cardValues.forEach((value) => {
+        movesCounter.textContent = moves;
+        matchesCounter.textContent = matches;
+
+        shuffle(levelConfig.cardValues);
+        gameContainer.innerHTML = "";
+        gameContainer.style.gridTemplateColumns = `repeat(${levelConfig.gridSize}, 100px)`;
+
+        levelConfig.cardValues.forEach((value) => {
             const card = document.createElement("div");
             card.classList.add("card");
             card.dataset.value = value;
@@ -65,9 +112,14 @@ document.addEventListener("DOMContentLoaded", () => {
             flippedCards = [];
             lockBoard = false;
 
-            // Check if the game is won
-            if (matches === cardValues.length / 2) {
-                setTimeout(() => alert("You won!"), 500);
+            // Check if the level is won
+            if (matches === levels[currentLevel].cardValues.length / 2) {
+                stopTimer();
+                if (currentLevel === 1) {
+                    nextLevelButton.style.display = "block";
+                } else {
+                    setTimeout(() => alert("You won the game!"), 500);
+                }
             }
         } else {
             setTimeout(() => {
@@ -84,6 +136,21 @@ document.addEventListener("DOMContentLoaded", () => {
         movesCounter.textContent = moves;
     }
 
+    // Event listeners
+    restartButton.addEventListener("click", () => {
+        currentLevel = 1;
+        nextLevelButton.style.display = "none";
+        initGame();
+    });
+
+    nextLevelButton.addEventListener("click", () => {
+        currentLevel = 2;
+        nextLevelButton.style.display = "none";
+        initGame();
+    });
+
     // Start the game
+    document.body.insertBefore(timerDisplay, gameContainer);
     initGame();
 });
+
